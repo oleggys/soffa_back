@@ -1,0 +1,11 @@
+// tsconfig.json
+{
+    "compilerOptions": {
+      "target": "esnext",
+      "module": "esnext",
+      // включает более строгий вывод о свойствах данных в `this`
+      "strict": true,
+      "jsx": "preserve",
+      "moduleResolution": "node"
+    }
+  }
