@@ -1,25 +1,27 @@
 <template>
-  <div class="row">
-    <table class="col-4">
-      <tr v-for="row in this.world" :key="row">
-        <td v-for="column in row" :key="column" :class="{ red: column == 1 }"></td>
-      </tr>
-    </table>
-    
-     {{ tp }}
-  <div class="constructor round-corner-sm  col-10 m-auto position-relative h-100 shadow">
-    <div class="round-corner-sm constructor-menu col-xl-2 col-md-3 m-3 shadow p-3  position-absolute top-50 start-0 translate-middle-y">
-      <h4 class="pl-3">Цвета</h4>
-      <div class="row">
-        <div class="constructor-color-list-item col-md-3 mb-2" v-for="color in colors" :key="color.id" 
-          v-bind:class="{'selected': selectedColor == color.id }" @click="changeColor(color.id)">
-          <img :src="color.path" class="w-100" />
+<!--  <div class="row">-->
+<!--    <table class="col-4">-->
+<!--      <tr v-for="row in this.world" :key="row">-->
+<!--        <td v-for="column in row" :key="column" :class="{ red: column == 1 }"></td>-->
+<!--      </tr>-->
+<!--    </table>-->
+
+  <div class="constructor round-corner-sm  col-10 p-0 m-auto position-relative h-100 shadow">
+    <div class="round-corner-sm constructor-menu col-xl-9 col-md-9 m-3 shadow p-3 position-absolute start-50 translate-middle">
+      <div class="col-md-12 row">
+        <div class="constructor-color-list-item col-md-1" v-for="color in colors" :key="color.id"
+             v-bind:class="{'selected': selectedColor == color.id }" @click="changeColor(color.id)">
+          <img :src="color.path" class="w-100 h-100" />
         </div>
       </div>
-      <div class="price-footer row mt-4">
-        <h4 class="col-2 text-start mb-0">Цена:</h4>
-        <span class="col-10 text-end mb-0">{{ price }} руб.</span>
+      <div class="row">
+
+<!--        <div class=" col-md-6 price-footer row ">-->
+<!--          <h4 class="col-2 text-start mb-0">Цена:</h4>-->
+<!--          <span class="col-10 text-end mb-0">{{ price }} руб.</span>-->
+<!--        </div>-->
       </div>
+
     </div>
     <div class="round-corner-sm constructor-canvas" 
       @drop="onDrop()"
@@ -27,12 +29,7 @@
       @dragenter.prevent>
       <Renderer ref="renderer" class="w-100 h-100" resize="window" >
         <Camera ref="camera" :position="{ z: 60, x:0, y:0 }"/>
-        <Scene background="#ffffff" or ref="scene">
-          <!-- <AmbientLight /> -->
-          <!-- <PointLight color="#FFFFFF" :intensity="1" :position="{ z: 20, x:20, y:15 }" /> -->
-          <!-- <PointLight color="#FDF4DC" :intensity="1" :position="{ z: 10, x:-10, y:15 }" /> -->
-          <!-- <PointLight color="#FDF4DC" :intensity="1" :position="{ z: -10, x:10, y:15 }" />
-          <PointLight color="#FDF4DC" :intensity="1" :position="{ z: -10, x:-10, y:15 }" /> -->
+        <Scene background="#ffffff" ref="scene" >
         </Scene>
       </Renderer>
     </div>
@@ -51,7 +48,7 @@
       </div>
     </div>
   </div>
-  </div>
+
   
   
 </template>
@@ -77,46 +74,58 @@ export default {
   },
   mounted() {
     
-    var scene = this.$refs.scene
+    let scene = this.$refs.scene
     this.camera = this.$refs.camera.camera
     this.camera.up.set(0, 0, 1);
     this.scene = scene
-    
-    // var camera = 
-    // camera.
-    const axesHelper = new THREE.AxesHelper( 5 );
+
     var renderer = this.$refs.renderer.renderer
+
     renderer.capabilities.getMaxAnisotropy()
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.VSMShadowMap;
 
     this.orbitCtrl = new OrbitControls( this.camera, renderer.domElement )
     this.orbitCtrl.update()
     this.orbitCtrl.target.set(0,1,0);
     this.orbitCtrl.saveState();
+    this.orbitCtrl.maxPolarAngle = Math.PI / 3
 
-    this.orbitCtrl.enabled = false;		
-    this.orbitCtrl.reset();					
+    this.orbitCtrl.enabled = false;
+    this.orbitCtrl.reset();
     const vect3 = new THREE.Vector3(-1,0,0);
-    this.orbitCtrl.target = vect3;	
-    this.camera.lookAt(vect3);			
+    this.orbitCtrl.target = vect3;
+    this.camera.lookAt(vect3);
     this.orbitCtrl.enabled = true;
 
-    const light = new THREE.DirectionalLight( 0xffffff );
-    light.position.x = 40;
-    light.position.y = -40;
-    light.position.z = 60;
+    let light = new THREE.DirectionalLight( 0xfdfbf2, 0.4);
+    light.shadow.mapSize.x = 1024
+    light.shadow.mapSize.y = 1024
+    light.position.set(20, 20, 120)
+    light.castShadow = true;
+    light.shadow.camera.top = 100;
+    light.shadow.camera.bottom = -100;
+    light.shadow.camera.left = -100;
+    light.shadow.camera.right = 100;
+    light.shadow.radius = 5
+    light.shadow.blurSamples = 50
+    scene.add( light );
+
+    const light2 = new THREE.HemisphereLight( 0xfbf8e6, 0xcecece, 0.5 );
+    scene.add( light2 );
 
 
-    scene.add( axesHelper );
-		scene.add( light );
-
-    // scene.add( sky );
-    // this.world = new CANNON.World()
-    // console.log(this.world)
-    const size = 100;
-    const divisions = 100;
-    this.gridHelper = new THREE.GridHelper( size, divisions );
-    this.gridHelper.visible = false
-    scene.add( this.gridHelper );
+    var planeGeometry = new THREE.PlaneGeometry(1000,1000);
+    var planeMaterial = new THREE.MeshStandardMaterial( { color: 0xFFFFFF} );
+    var texture = THREE.ImageUtils.loadTexture(this.tp)
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set( 20, 20 );
+    // planeMaterial.opacity = 0.2;
+    planeMaterial.map = texture
+    var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+    plane.receiveShadow = true;
+    scene.add(plane)
 
     this.dragCtrl = new DragControls(this.modules, this.camera, renderer.domElement );
     this.dragCtrl.addEventListener('dragstart', this.onObjectDragStart);
@@ -126,20 +135,20 @@ export default {
     this.lcDragCtrl = new DragControls(this.attrControls.controls, this.camera, renderer.domElement );
     this.lcDragCtrl.addEventListener('dragstart', this.onControlDragStart);
     this.lcDragCtrl.addEventListener('drag', this.onControlDrag);
-    this.lcDragCtrl.addEventListener('dragend', this.onControlDragEnd);
-    
+    // this.lcDragCtrl.addEventListener('dragend', this.onControlDragEnd);
+
     this.orbitCtrl.enableRotate = false
     this.dragCtrl.activate();
     this.cameraTotop()
-    
+
   },
   setup() {
-    
+
   },
   data () {
     return {
       world: Array(100).fill().map(()=>Array(100).fill(0)),
-      tp: null,
+      tp: require('@/assets/materials/floor.jpg'),
       scene: null,
       cameraCtrl: null,
       camera: null,
@@ -233,16 +242,30 @@ export default {
     }
   },
   methods: {
+    clearControlHelpers(){
+      var scene = this.$refs.scene
+      scene.remove(toRaw(this.attrControls.text_axis_y))
+      scene.remove(toRaw(this.attrControls.text_axis_x))
+      scene.remove(toRaw(this.attrControls.line))
+      scene.remove(toRaw(this.attrControls.controls[0]))
+      scene.remove(toRaw(this.attrControls.controls[1]))
+      scene.remove(toRaw(this.attrControls.controls[2]))
+      scene.remove(toRaw(this.attrControls.controls[3]))
+      this.attrControls.text_axis_y = null
+      this.attrControls.text_axis_x = null
+      this.attrControls.line = null
+      this.attrControls.controls.length = 0
+    },
     showSizesLines(object){
       var scene = this.$refs.scene
       var box = new THREE.Box3().setFromObject(object);
       var geometry = new LineGeometry();
       var pointArr = [
-        box.max.x, box.max.y, box.max.z, 
-        box.min.x, box.max.y, box.max.z, 
-        box.min.x, box.min.y, box.max.z, 
-        box.max.x, box.min.y, box.max.z, 
-        box.max.x, box.max.y, box.max.z, 
+        box.max.x, box.max.y, box.max.z,
+        box.min.x, box.max.y, box.max.z,
+        box.min.x, box.min.y, box.max.z,
+        box.max.x, box.min.y, box.max.z,
+        box.max.x, box.max.y, box.max.z,
       ]
       geometry.setPositions( pointArr);
       var material  = new LineMaterial( {color: 0xdd2222,linewidth: 5,});
@@ -270,9 +293,8 @@ export default {
       sprite2.position.set(
         box.max.x - (box.max.x - box.min.x) / 2,
         box.max.y - 1.5,
-        box.max.z 
+        box.max.z
       )
-      console.log("PP:", box.max.x, box.min.x, box.max.x - box.min.x)
       sprite2.name = 'text_axis_x'
       if (this.attrControls.line != null){
         scene.remove(toRaw(this.attrControls.text_axis_y))
@@ -295,7 +317,7 @@ export default {
         const sphere2 = this.getSphere('top', box, event.object.uuid)
         const sphere3 = this.getSphere('bottom', box, event.object.uuid)
         const sphere4 = this.getSphere('left', box, event.object.uuid)
-        console.log(sphere)
+
         this.attrControls.controls[0] = sphere
         this.attrControls.controls[1] = sphere2
         this.attrControls.controls[2] = sphere3
@@ -305,23 +327,13 @@ export default {
         scene.add(sphere3)
         scene.add(sphere4)
       } else {
-        scene.remove(toRaw(this.attrControls.text_axis_y))
-        scene.remove(toRaw(this.attrControls.text_axis_x))
-        scene.remove(toRaw(this.attrControls.line))
-        scene.remove(toRaw(this.attrControls.controls[0]))
-        scene.remove(toRaw(this.attrControls.controls[1]))
-        scene.remove(toRaw(this.attrControls.controls[2]))
-        scene.remove(toRaw(this.attrControls.controls[3]))
-        this.attrControls.text_axis_y = null
-        this.attrControls.text_axis_x = null
-        this.attrControls.line = null
-        this.attrControls.controls.length = 0
+        this.clearControlHelpers()
       }
     },
     getSphere(arrow, box, objectId){
-      const geometry = new THREE.SphereGeometry( 0.5, 16, 16 ); 
-      const material = new THREE.MeshBasicMaterial( { color: '#cecece' } ); 
-      const sphere = new THREE.Mesh( geometry, material ); 
+      const geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
+      const material = new THREE.MeshBasicMaterial( { color: '#cecece' } );
+      const sphere = new THREE.Mesh( geometry, material );
       if (arrow == 'bottom') {
         sphere.position.set(
           box.max.x + 1,
@@ -349,7 +361,7 @@ export default {
         if (!this.checkWord([box.max.x+50, box.max.y+51],[box.min.x+50, box.min.y+50])){
           sphere.visible = false
         }
-        
+
       } else {
         sphere.position.set(
           box.min.x - 1,
@@ -383,14 +395,13 @@ export default {
           event.object.position.y = Math.round(event.object.position.y)
           event.object.position.x = pos.x
           event.object.position.z = pos.z
-          if (Math.round(event.object.last_position.y) != Math.round(event.object.position.y)){            
+          if (Math.round(event.object.last_position.y) != Math.round(event.object.position.y)){
             var sign = Math.round(event.object.position.y) - Math.round(event.object.last_position.y)
             if (event.object.last_position.y <= 0){
               sign *= -1
             }
-            
+
             var sc = pobject.sc
-            this.tp = pobject.position
 
             pobject.scale.y += sc.y * sign
             if (event.object.last_position.y <= 0) {
@@ -402,9 +413,9 @@ export default {
               this.attrControls.controls[1].position.y += pobject.position_delta.y / 2 * sign
               this.attrControls.controls[2].position.y += pobject.position_delta.y / 2 * sign
             }
-            
-            
-            
+
+
+
             this.showSizesLines(pobject)
             event.object.last_position = Object.assign({}, toRaw(event.object.position))
           }
@@ -413,16 +424,15 @@ export default {
         case 'bottom':
           event.object.position.y = pos.y
           event.object.position.z = pos.z
-          
+
           event.object.position.x = Math.round(event.object.position.x)
           break
       }
     },
-    onControlDragEnd(event){
-      console.log(event)
-    },
+    // onControlDragEnd(event){
+    //   console.log(event)
+    // },
     changeColor(id) {
-      console.log(this.selectedColor, id)
       this.selectedColor = id
       var renderer = this.$refs.renderer.renderer
       var texture = THREE.ImageUtils.loadTexture(this.colors[this.selectedColor-1].path)
@@ -431,10 +441,10 @@ export default {
       texture.repeat.set( 20, 20 );
       texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
       texture.magFilter = THREE.NearestFilter
+      // eslint-disable-next-line no-unused-vars
       for (const [key, module] of Object.entries(this.modules)){
-        console.log(key)
         module.material.map = texture
-        module.material.needsUpdate = true 
+        module.material.needsUpdate = true
       }
     },
     onObjectDragStart(event) {
@@ -462,7 +472,7 @@ export default {
       } else {
         event.object.material.color.set( 0xFFFFFF )
       }
-      
+
       var scene = this.$refs.scene
       scene.remove(toRaw(this.attrControls.text_axis_y))
       scene.remove(toRaw(this.attrControls.text_axis_x))
@@ -493,7 +503,6 @@ export default {
         this.startPosition = null
         event.object.material.color.set('#FFFFFF')
       } else {
-        console.log(this.startPosition, event.object.position)
         event.object.position.x = this.startPosition.x
         event.object.position.z = this.startPosition.z
         event.object.position.y = this.startPosition.y
@@ -505,7 +514,7 @@ export default {
         this.fillWord(1, maxPoint, minPoint)
       }
 
-      
+
     },
     fillWord(fill, maxPoint, minPoint, scale=false) {
       if (scale){
@@ -515,9 +524,9 @@ export default {
         maxPoint = [Math.round(maxPoint[0]), Math.round(maxPoint[1])]
         minPoint = [Math.round(minPoint[0]), Math.round(minPoint[1])]
       }
-      
+
       for (var i = minPoint[0]; i < maxPoint[0]; i++){
-        for (var j = minPoint[1]; j < maxPoint[1]; j++){ 
+        for (var j = minPoint[1]; j < maxPoint[1]; j++){
           this.world[i][j] = fill
         }
       }
@@ -526,7 +535,7 @@ export default {
       maxPoint = [Math.round(maxPoint[0]), Math.round(maxPoint[1])]
       minPoint = [Math.round(minPoint[0]), Math.round(minPoint[1])]
       for (var i = minPoint[0]; i < maxPoint[0]; i++){
-        for (var j = minPoint[1]; j < maxPoint[1]; j++){ 
+        for (var j = minPoint[1]; j < maxPoint[1]; j++){
           if (this.world[i][j] == 1) {
             return false
           }
@@ -535,23 +544,15 @@ export default {
       return true
     },
     onDragStart(event, item) {
-      console.log(item)
       this.dragbleModuleId = item
     },
     onDrop() {
-      // console.log(this.module_types,this.dragbleModuleId)
-      this.addModel(this.module_types[this.dragbleModuleId-1].model_path, this.dragbleModuleId-1)
+      this.addModel(this.module_types[this.dragbleModuleId-1].model_path)
       if (this.mode == 'view'){
         this.changeMode()
       }
     },
-
-    onReady(e) {
-      console.log("Render is ready")
-      console.log(e)
-    },
     changeMode() {
-      console.log(this.modules)
       if (this.mode == 'create') {
         this.mode = 'view'
         this.orbitCtrl.enableRotate = true
@@ -568,15 +569,14 @@ export default {
     cameraTotop() {
       // console.log(gsap)
       this.camera.position.set(0,0,60)
-      this.orbitCtrl.enabled = false;		
-      this.orbitCtrl.reset();					
+      this.orbitCtrl.enabled = false;
+      this.orbitCtrl.reset();
       const vect3 = new THREE.Vector3(-1,0,0);
-      this.orbitCtrl.target = vect3;	
-      this.camera.lookAt(vect3);			
+      this.orbitCtrl.target = vect3;
+      this.camera.lookAt(vect3);
       this.orbitCtrl.enabled = true;
     },
-    addModel(path, modelType) {
-      console.log(path, modelType)
+    addModel(path) {
       var colors = this.colors
       var selectedColor = this.selectedColor-1
       const fbxLoader = new FBXLoader()
@@ -593,39 +593,31 @@ export default {
               texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
               child.material.map = texture
               child.material.color.set( 0xFFFFFF )
-              // child.material.needsUpdate = true      
+              child.castShadow = true;
             }
           })
           object.traverse( function ( child ) {
               if ( child.isMesh ) {
                 var middle = new THREE.Vector3();
-                var geometry = child.geometry;
-
-                geometry.computeBoundingBox();
-
-                middle.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
-                middle.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
-                middle.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
-
-                child.localToWorld( middle );
-                return middle;
-                
-                // child.geometry.center(); // center here
+                var geometry = child.geometry
+                geometry.computeBoundingBox()
+                middle.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2
+                middle.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2
+                middle.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2
+                child.localToWorld( middle )
+                return middle
               }
           });
-          
+
           object.position.x = Math.round(object.position.x)
           object.position.z = Math.round(object.position.z)
           object.position.y = Math.round(object.position.y)
           // console.log(object)
-          object.scale.x = 2
-          object.scale.y = 2
-          object.scale.z = 2
+          object.scale.set(2,2,2)
           var box = new THREE.Box3().setFromObject(object)
           var maxPoint = [(box.max.x + 50), (box.max.y + 50)]
           var minPoint = [(box.min.x + 50), (box.min.y + 50)]
           var x = 0
-          console.log("---1",maxPoint, minPoint)
 
           while(!this.checkWord(maxPoint, minPoint)){
             box = new THREE.Box3().setFromObject(object)
@@ -638,10 +630,11 @@ export default {
             }
           }
           this.fillWord(1, maxPoint, minPoint, false)
-          console.log(maxPoint, minPoint)
+
           // console.log(object)
           var scene = this.$refs.scene
           object.isDraggable = true;
+          object.castShadow = true;
           scene.add(object)
 
           box = new THREE.Box3().setFromObject(object.children[0])
@@ -690,10 +683,12 @@ export default {
 }
 .constructor-color-list-item.selected img{
   border: 3px solid orange;
+  min-width: 50px;
 }
 .constructor-action-bar {
   background: #fff;
   border-radius: 6px;
+  font-size: 2rem;
 }
 .bar-item{
   border-radius: 4px;
@@ -724,5 +719,6 @@ export default {
 }
 .constructor-menu {
   background: #fff;
+  bottom: 0;
 }
 </style>

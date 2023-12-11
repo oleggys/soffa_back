@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid">
-    <Constructor/>
+    <MyConstructor/>
   </div>
 </template>
 
@@ -10,7 +10,7 @@ import MyConstructor from './components/MyConstructor.vue'
 export default {
   name: 'App',
   components: {
-    Constructor: MyConstructor
+    MyConstructor: MyConstructor
   }
 }
 </script>
